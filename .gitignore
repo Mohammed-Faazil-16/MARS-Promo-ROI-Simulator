@@ -1,0 +1,24 @@
+# Python runtime and generated files
+backend/.venv/
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+backend/data/*.db
+backend/data/*.sqlite*
+
+# Frontend generated/dependency files
+promo-roi-frontend/node_modules/
+promo-roi-frontend/dist/
+promo-roi-frontend/build/
+
+# Local configuration and runtime logs
+.env
+backend/.env
+*.log
+logs/
+
+# Editors and OS files
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini

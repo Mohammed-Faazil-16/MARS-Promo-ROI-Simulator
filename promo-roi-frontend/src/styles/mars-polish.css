@@ -1,0 +1,442 @@
+/* Page canvas: very light pink warmth, while cards stay white */
+html,
+body {
+  min-height: 100%;
+  background: #fff7fa;
+}
+
+.app-shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 88% 5%, rgba(255, 50, 160, 0.055), transparent 32%),
+    radial-gradient(ellipse at 8% 92%, rgba(255, 220, 0, 0.045), transparent 28%),
+    linear-gradient(135deg, #fff7fa 0%, #f8f7fb 54%, #fff8f6 100%);
+  color: var(--text);
+}
+
+.main-area,
+.page-content {
+  background: transparent;
+}
+
+.sidebar {
+  background: #ffffff;
+  border-right: 1px solid #eee7ec;
+  box-shadow: 3px 0 14px rgba(255, 50, 160, 0.035);
+}
+
+.topbar {
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom-color: #eee7ec;
+  backdrop-filter: blur(10px);
+}
+
+/* Workspace links: always dark at rest, strong visible Mars-colour hover */
+.sidebar .sidebar-nav .nav-item {
+  color: #383944 !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  opacity: 1 !important;
+  box-shadow: none;
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.sidebar .sidebar-nav .nav-item > span:not(.active-indicator),
+.sidebar .sidebar-nav .nav-item > svg {
+  color: inherit !important;
+  opacity: 1 !important;
+}
+
+.sidebar .sidebar-nav .nav-item:not(.nav-active):hover {
+  color: var(--mars-blue) !important;
+  background: var(--mars-pink-hover) !important;
+  border-color: var(--mars-pink-border) !important;
+  box-shadow: 0 3px 9px var(--mars-pink-shadow) !important;
+  transform: translateX(2px);
+}
+
+.sidebar .sidebar-nav .nav-item:not(.nav-active):hover > span:not(.active-indicator),
+.sidebar .sidebar-nav .nav-item:not(.nav-active):hover > svg {
+  color: var(--mars-blue) !important;
+  opacity: 1 !important;
+}
+
+.sidebar .sidebar-nav .nav-item.nav-active {
+  color: var(--mars-blue) !important;
+  background: #eeeeff !important;
+  border: 1px solid #d8d8ff !important;
+  box-shadow: inset 3px 0 0 var(--mars-blue) !important;
+  opacity: 1 !important;
+  transform: none;
+}
+
+.sidebar .sidebar-nav .nav-item.nav-active > span:not(.active-indicator),
+.sidebar .sidebar-nav .nav-item.nav-active > svg {
+  color: var(--mars-blue) !important;
+  opacity: 1 !important;
+}
+
+.sidebar .sidebar-nav .nav-item .active-indicator {
+  display: block;
+  background: var(--mars-blue) !important;
+  opacity: 1 !important;
+}
+
+/* Sidebar help card and question-circle icon */
+.sidebar .help-card {
+  color: var(--text);
+  background: #ffffff;
+  border: 1px solid #eee1e8;
+  box-shadow: 0 3px 11px rgba(255, 50, 160, 0.055);
+}
+
+.sidebar .help-card > strong {
+  color: #272932 !important;
+}
+
+.sidebar .help-card p {
+  color: #626775 !important;
+}
+
+.sidebar .help-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 10px;
+  color: var(--mars-blue) !important;
+  background: #ffeaf2 !important;
+  border: 1px solid #f2c6d8 !important;
+  border-radius: 9px;
+  box-shadow: none !important;
+  opacity: 1 !important;
+}
+
+.sidebar .help-icon svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  color: var(--mars-blue) !important;
+  stroke: var(--mars-blue) !important;
+  stroke-width: 1.8;
+  opacity: 1 !important;
+}
+
+.sidebar .help-link {
+  color: var(--mars-blue) !important;
+  opacity: 1 !important;
+  border-radius: 5px;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.sidebar .help-link:hover {
+  color: #000078 !important;
+  background: var(--mars-pink-hover) !important;
+}
+
+/* Demo Manager row: visible avatar, user text and settings control */
+.sidebar .sidebar-footer {
+  border-top-color: #eee3e9 !important;
+}
+
+.sidebar .sidebar-footer .avatar {
+  color: #ffffff !important;
+  background: var(--mars-blue) !important;
+  border: 1px solid var(--mars-blue) !important;
+  opacity: 1 !important;
+}
+
+.sidebar .sidebar-footer .user-copy strong {
+  color: #292a34 !important;
+}
+
+.sidebar .sidebar-footer .user-copy span {
+  color: #686c78 !important;
+}
+
+.sidebar .sidebar-footer .icon-button {
+  display: inline-grid !important;
+  place-items: center;
+  color: #343746 !important;
+  background: #f4f4f8 !important;
+  border: 1px solid #e4e3eb !important;
+  border-radius: 8px;
+  opacity: 1 !important;
+  box-shadow: none !important;
+}
+
+.sidebar .sidebar-footer .icon-button svg {
+  color: #343746 !important;
+  stroke: currentColor !important;
+  opacity: 1 !important;
+}
+
+.sidebar .sidebar-footer .icon-button:hover {
+  color: var(--mars-blue) !important;
+  background: var(--mars-pink-hover) !important;
+  border-color: var(--mars-pink-border) !important;
+  box-shadow: 0 3px 8px var(--mars-pink-shadow) !important;
+}
+
+.sidebar .sidebar-footer .icon-button:hover svg {
+  color: var(--mars-blue) !important;
+}
+
+/* Top-right notification bell: visible at rest and on hover */
+.topbar .notification-button,
+.topbar .icon-button.notification-button {
+  display: inline-grid !important;
+  place-items: center;
+  color: var(--mars-blue) !important;
+  background: #ffffff !important;
+  border: 1px solid #e8e5ee !important;
+  opacity: 1 !important;
+  box-shadow: none !important;
+}
+
+.topbar .notification-button svg {
+  color: var(--mars-blue) !important;
+  stroke: var(--mars-blue) !important;
+  opacity: 1 !important;
+}
+
+.topbar .notification-button:hover {
+  color: var(--mars-blue) !important;
+  background: var(--mars-pink-hover) !important;
+  border-color: var(--mars-pink-border) !important;
+  box-shadow: 0 3px 8px var(--mars-pink-shadow) !important;
+}
+
+.topbar .notification-button:hover svg {
+  color: var(--mars-blue) !important;
+  stroke: var(--mars-blue) !important;
+}
+
+/* Calm, consistent line-icon treatment for callout and KPI icons */
+.insight-icon,
+.kpi-icon {
+  display: grid;
+  place-items: center;
+  color: var(--mars-blue) !important;
+  background: #fff0f5 !important;
+  border: 1px solid #f1dce5 !important;
+  border-radius: 9px;
+  box-shadow: none !important;
+  opacity: 1 !important;
+}
+
+.insight-icon svg,
+.kpi-icon svg {
+  color: var(--mars-blue) !important;
+  stroke: currentColor !important;
+  stroke-width: 1.8;
+  opacity: 1 !important;
+}
+
+/* Avoid the artificial multi-colour icon tiles: use one restrained treatment */
+.kpi-icon.kpi-blue,
+.kpi-icon.kpi-green,
+.kpi-icon.kpi-purple,
+.kpi-icon.kpi-amber {
+  color: var(--mars-blue) !important;
+  background: #fff0f5 !important;
+  border: 1px solid #f1dce5 !important;
+}
+
+/* White cards with a faint pink shadow underneath at rest */
+.kpi-card,
+.table-card,
+.analysis-summary > div,
+.form-card,
+.result-card,
+.dashboard-grid > section,
+.dashboard-grid > section[aria-label] {
+  background-color: #ffffff;
+  border-color: #e9e3e8;
+  box-shadow:
+    0 3px 12px rgba(255, 50, 160, 0.045),
+    0 1px 3px rgba(39, 41, 50, 0.025);
+  transition:
+    transform 170ms ease,
+    border-color 170ms ease,
+    box-shadow 170ms ease;
+}
+
+/* Clear but restrained card hover — especially ROI by scenario and Decision breakdown */
+.kpi-card:hover,
+.table-card:hover,
+.analysis-summary > div:hover,
+.form-card:hover,
+.result-card:hover,
+.dashboard-grid > section:hover,
+.dashboard-grid > section[aria-label]:hover {
+  border-color: var(--mars-pink-border) !important;
+  box-shadow:
+    0 8px 20px rgba(255, 50, 160, 0.115),
+    0 2px 6px rgba(0, 0, 160, 0.035) !important;
+  transform: translateY(-2px);
+}
+
+/* ROI chart: add breathing room and make its rows respond to hover */
+.roi-chart {
+  gap: 15px !important;
+  padding: 12px 8px 10px !important;
+}
+
+.roi-chart-row {
+  padding: 8px 9px !important;
+  margin: 0 -9px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.roi-chart-row:hover {
+  background: var(--mars-pink-hover) !important;
+  border-color: rgba(255, 50, 160, 0.20) !important;
+  box-shadow: 0 2px 7px rgba(255, 50, 160, 0.085);
+}
+
+.roi-chart-row:hover .roi-chart-name,
+.roi-chart-row:hover > strong {
+  color: var(--mars-blue) !important;
+}
+
+.roi-track {
+  background: #eeedf2;
+}
+
+.roi-chart-row:hover .roi-track {
+  background: #e5e2ec;
+}
+
+/* Decision breakdown: hover each Approve / Review / Reject meter row */
+.decision-card .decision-meter {
+  padding: 8px 9px;
+  margin: 3px -9px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.decision-card .decision-meter:hover {
+  background: var(--mars-pink-hover) !important;
+  border-color: rgba(255, 50, 160, 0.20) !important;
+  box-shadow: 0 2px 7px rgba(255, 50, 160, 0.085);
+}
+
+.decision-card .meter-label,
+.decision-card .meter-label strong,
+.decision-card .meter-label small {
+  opacity: 1;
+}
+
+.decision-card .meter-track {
+  background: #eeedf2;
+}
+
+/* Run a simulation: keep the text-link appearance, add a visible blush hover */
+.insight-banner .banner-link {
+  color: var(--mars-blue) !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: 6px;
+  padding: 8px 10px;
+  opacity: 1 !important;
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.insight-banner .banner-link svg {
+  color: var(--mars-blue) !important;
+  stroke: currentColor !important;
+  opacity: 1 !important;
+}
+
+.insight-banner .banner-link:hover {
+  color: var(--mars-blue) !important;
+  background: var(--mars-pink-hover) !important;
+  border-color: var(--mars-pink-border) !important;
+  box-shadow: 0 3px 8px var(--mars-pink-shadow) !important;
+}
+
+/* Other interactive text actions: never fade into the white background */
+.text-button,
+.row-action,
+.help-link {
+  color: var(--mars-blue);
+  opacity: 1;
+}
+
+.text-button:hover,
+.row-action:hover {
+  color: var(--mars-blue) !important;
+  background: var(--mars-pink-hover) !important;
+  border-color: var(--mars-pink-border) !important;
+}
+
+/* Status colours stay semantic */
+.status-approve,
+.status-approved {
+  color: #006b58;
+  background: #e0f8f4;
+  border-color: #b7eee5;
+}
+.status-review {
+  color: #685300;
+  background: #fff8cc;
+  border-color: #f0df83;
+}
+.status-reject,
+.status-rejected {
+  color: #a32d10;
+  background: #fff0eb;
+  border-color: #ffc5b7;
+}
+
+/* Keyboard access and reduced motion */
+.sidebar .sidebar-nav .nav-item:focus-visible,
+.sidebar .sidebar-footer .icon-button:focus-visible,
+.topbar .notification-button:focus-visible,
+.insight-banner .banner-link:focus-visible {
+  outline: 2px solid var(--mars-blue) !important;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar .sidebar-nav .nav-item,
+  .sidebar .sidebar-footer .icon-button,
+  .topbar .notification-button,
+  .kpi-card,
+  .table-card,
+  .analysis-summary > div,
+  .dashboard-grid > section,
+  .roi-chart-row,
+  .decision-card .decision-meter,
+  .insight-banner .banner-link {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+/* Keep the original mobile sidebar and responsive breakpoints */
+@media (max-width: 720px) {
+  .sidebar {
+    background: #ffffff;
+    box-shadow: 8px 0 24px rgba(28, 32, 45, 0.12);
+  }
+}

@@ -1,0 +1,41 @@
+* { box-sizing: border-box; } 
+
+button, input, select { font: inherit; } 
+
+button { -webkit-tap-highlight-color: transparent; } 
+
+button:focus-visible, input:focus-visible, select:focus-visible { 
+
+  outline: 3px solid rgba(53, 105, 232, 0.22); 
+
+  outline-offset: 2px; 
+
+} 
+
+button:disabled { cursor: not-allowed !important; opacity: .48; transform: none !important; box-shadow: none !important; } 
+
+  
+
+.app-shell { 
+
+  min-height: 100vh; 
+
+  display: flex; 
+
+  color: var(--text); 
+
+  background: 
+
+    radial-gradient(ellipse at 84% 0%, rgba(213, 226, 255, .42), transparent 34%), 
+
+    radial-gradient(ellipse at 8% 96%, rgba(224, 237, 232, .28), transparent 30%), 
+
+    var(--app-bg); 
+
+  font-family: var(--sans, Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif); 
+
+  font-size: 14px; 
+
+  line-height: 1.45; 
+
+}

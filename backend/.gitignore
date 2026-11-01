@@ -1,0 +1,11 @@
+**/.venv/
+**/node_modules/
+**/__pycache__/
+**/.pytest_cache/
+**/dist/
+**/build/
+.env
+**/.env
+**/data/*.db
+*.log
+*.zip

@@ -1,0 +1,25 @@
+/* Analysis and comparison */ 
+
+.analysis-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; margin-bottom: 19px; } 
+
+.analysis-summary > div { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 16px 17px; background: rgba(255,255,255,.93); border: 1px solid #e7ebf2; border-radius: 13px; box-shadow: var(--shadow-sm); } 
+
+.summary-label { color: #8c97a8; font-size: 10px; } 
+
+.analysis-summary strong { color: #27364d; font-size: 25px; font-weight: 790; letter-spacing: -.5px; line-height: 1; font-variant-numeric: tabular-nums; } 
+
+.table-toolbar { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; } 
+
+.search-field { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 180px; height: 39px; padding: 0 10px; color: #9aa4b3; background: #fff; border: 1px solid #dfe5ee; border-radius: 9px; } 
+
+.search-field:focus-within { border-color: #83a2f4; box-shadow: 0 0 0 3px rgba(53,105,232,.09); } 
+
+.search-field input { height: 35px; padding: 0; border: 0; box-shadow: none !important; background: transparent; } 
+
+.filter-select { width: auto; min-width: 132px; height: 39px; padding: 0 28px 0 10px; color: #687589; background: #fff; font-size: 10.5px; } 
+
+.compare-checkbox { width: 15px; height: 15px; accent-color: #3569e8; cursor: pointer; } 
+
+.comparison-card { animation: slide-in .24s ease-out; } 
+
+.comparison-card .table-card-header { margin-bottom: 12px; }

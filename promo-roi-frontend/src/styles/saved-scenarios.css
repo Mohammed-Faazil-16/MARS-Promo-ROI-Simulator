@@ -1,0 +1,15 @@
+/* Saved Scenarios library — added as a frontend-only workspace page */ 
+
+.saved-row-actions { display: inline-flex; align-items: center; gap: 3px; } 
+
+.saved-row-actions .row-action { color: #667267; } 
+
+.saved-row-actions .row-action:hover { color: #315b48; background: #e9eee5; border-color: #d7e1d1; } 
+
+.saved-row-actions .row-delete-action { color: #8b716d; } 
+
+.saved-row-actions .row-delete-action:hover { color: #a7473f; background: #f8e9e5; border-color: #ebd0ca; transform: none; } 
+
+.saved-scenarios-table { min-width: 850px; } 
+
+.saved-summary { margin-bottom: 20px; }
