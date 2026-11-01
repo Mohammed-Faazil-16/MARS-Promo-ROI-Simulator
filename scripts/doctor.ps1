@@ -3,6 +3,7 @@ $ErrorActionPreference = 'Continue'
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $Frontend = Join-Path $ProjectRoot 'promo-roi-frontend'
 $Backend = Join-Path $ProjectRoot 'backend'
+. (Join-Path $PSScriptRoot 'python-discovery.ps1')
 $results = [System.Collections.Generic.List[object]]::new()
 function Add-Check($Name, $Status, $Detail) { $results.Add([pscustomobject]@{ Check=$Name; Status=$Status; Detail=$Detail }) }
 function Test-PortFree([int]$Port) {
@@ -16,22 +17,15 @@ try {
     Add-Check 'Windows' 'OK' ("Windows {0}, build {1}" -f $os.DisplayVersion,$os.CurrentBuild)
 } catch { Add-Check 'Windows' 'WARN' ("Windows version {0}" -f [Environment]::OSVersion.Version) }
 Add-Check 'PowerShell' 'OK' $PSVersionTable.PSVersion.ToString()
-$pythonCmd = Get-Command python -ErrorAction SilentlyContinue
-$pyCmd = Get-Command py -ErrorAction SilentlyContinue
+$pyCmd = Get-Command py -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+$selectedPython = Get-CompatiblePython
 $pythonPath = $null; $pythonVersion = $null
-if ($pyCmd) {
-    $pyOut = & $pyCmd.Source -3.12 -c "import sys; print(sys.executable); print('.'.join(map(str,sys.version_info[:3])))" 2>$null
-    if ($LASTEXITCODE -eq 0 -and $pyOut.Count -ge 2) { $pythonPath=$pyOut[0]; $pythonVersion=$pyOut[1] }
-}
-if (-not $pythonPath -and $pythonCmd) {
-    $pyOut = & $pythonCmd.Source -c "import sys; print(sys.executable); print('.'.join(map(str,sys.version_info[:3])))" 2>$null
-    if ($LASTEXITCODE -eq 0 -and $pyOut.Count -ge 2) { $pythonPath=$pyOut[0]; $pythonVersion=$pyOut[1] }
-}
+if($selectedPython) { $pythonPath=$selectedPython.Path; $pythonVersion=$selectedPython.Version.ToString() }
 if ($pythonVersion) {
     $v = [version]$pythonVersion
-    $ok = $v -ge [version]'3.11' -and $v -lt [version]'3.14'
-    Add-Check 'Python' $(if($ok){'OK'}else{'FAIL'}) ("Python {0} at {1}; supported 3.11–3.13" -f $pythonVersion,$pythonPath)
-} else { Add-Check 'Python' 'FAIL' 'Python 3.11–3.13 was not found.' }
+    $ok = $v -ge [version]'3.11' -and $v -lt [version]'3.15'
+    Add-Check 'Python' $(if($ok){'OK'}else{'FAIL'}) ("Python {0} at {1}; supported 3.11-3.14" -f $pythonVersion,$pythonPath)
+} else { Add-Check 'Python' 'FAIL' 'Python 3.11-3.14 was not found.' }
 Add-Check 'Python launcher (py)' $(if($pyCmd){'OK'}else{'WARN'}) $(if($pyCmd){$pyCmd.Source}else{'Not found; python.exe may still be usable.'})
 $nodeCmd=Get-Command node -ErrorAction SilentlyContinue; $npmCmd=Get-Command npm -ErrorAction SilentlyContinue
 if ($nodeCmd) {
@@ -49,7 +43,9 @@ $nodeModules=Join-Path $Frontend 'node_modules'; Add-Check 'Frontend dependencie
 foreach($file in @('backend\app\main.py','backend\requirements.txt','promo-roi-frontend\package.json','promo-roi-frontend\package-lock.json')) { $exists=Test-Path (Join-Path $ProjectRoot $file); Add-Check "Required file: $file" $(if($exists){'OK'}else{'FAIL'}) $(if($exists){'Found'}else{'Missing'}) }
 $backendPort=8001
 if($env:MARS_BACKEND_PORT){$candidate=0;if([int]::TryParse($env:MARS_BACKEND_PORT,[ref]$candidate) -and $candidate -ge 1 -and $candidate -le 65535){$backendPort=$candidate}else{Add-Check 'MARS_BACKEND_PORT' 'FAIL' 'Must be an integer from 1 through 65535.'}}
-foreach($port in @($backendPort,5173)) { $free=Test-PortFree $port; Add-Check "Port $port" $(if($free){'OK'}else{'WARN'}) $(if($free){'Available'}else{'Occupied or reserved; startup requires it to be bindable'}) }
+$frontendPort=5173
+if($env:MARS_FRONTEND_PORT){$candidate=0;if([int]::TryParse($env:MARS_FRONTEND_PORT,[ref]$candidate) -and $candidate -ge 1 -and $candidate -le 65535){$frontendPort=$candidate}else{Add-Check 'MARS_FRONTEND_PORT' 'FAIL' 'Must be an integer from 1 through 65535.'}}
+foreach($port in @($backendPort,$frontendPort)) { $free=Test-PortFree $port; Add-Check "Port $port" $(if($free){'OK'}else{'WARN'}) $(if($free){'Available'}else{'Occupied or reserved; startup requires it to be bindable'}) }
 $odbc=$false
 try { $odbc=@(Get-OdbcDriver -Name 'ODBC Driver 18 for SQL Server' -ErrorAction Stop).Count -gt 0 } catch { $odbc=$false }
 Add-Check 'SQL Server ODBC Driver 18 (optional)' $(if($odbc){'OK'}else{'INFO'}) $(if($odbc){'Installed; only needed for SQL Server mode.'}else{'Not detected; SQLite mode does not require it.'})

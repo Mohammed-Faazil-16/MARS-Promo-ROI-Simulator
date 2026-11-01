@@ -7,6 +7,11 @@ if($env:MARS_BACKEND_PORT){
     if(-not [int]::TryParse($env:MARS_BACKEND_PORT,[ref]$configuredPort) -or $configuredPort -lt 1 -or $configuredPort -gt 65535){throw 'MARS_BACKEND_PORT must be an integer from 1 through 65535.'}
     $BackendPort=$configuredPort
 }
+if($env:MARS_FRONTEND_PORT){
+    $configuredPort=0
+    if(-not [int]::TryParse($env:MARS_FRONTEND_PORT,[ref]$configuredPort) -or $configuredPort -lt 1 -or $configuredPort -gt 65535){throw 'MARS_FRONTEND_PORT must be an integer from 1 through 65535.'}
+    $FrontendPort=$configuredPort
+}
 function Test-PortAvailable([int]$Port) {
     $listener=$null
     try { $listener=[System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback,$Port); $listener.Start(); return $true }
@@ -40,11 +45,14 @@ $python=Join-Path $Backend '.venv\Scripts\python.exe'
 if(-not (Test-Path $python)){throw "Backend Python is missing at $python. Run .\setup.ps1 first."}
 if(-not (Test-Path (Join-Path $Frontend 'node_modules'))){throw 'Frontend dependencies are missing. Run .\setup.ps1 first.'}
 foreach($port in @($BackendPort,$FrontendPort)) {
-    if(-not (Test-PortAvailable $port)) { throw "Port $port is occupied or reserved. Close the process using it and retry. If the default backend port 8001 is unavailable, set MARS_BACKEND_PORT to a specific available port before startup; frontend port 5173 stays fixed." }
+    if(-not (Test-PortAvailable $port)) {
+        if($port -eq $FrontendPort){throw "Frontend port $port is occupied or reserved. No process was stopped. Choose an available port with MARS_FRONTEND_PORT (for example 5174), then rerun start.ps1."}
+        throw "Backend port $port is occupied or reserved. No process was stopped. Choose an available port with MARS_BACKEND_PORT, then rerun start.ps1."
+    }
 }
 $projectQ=Quote-PowerShell $ProjectRoot; $backendQ=Quote-PowerShell $Backend; $frontendQ=Quote-PowerShell $Frontend; $pythonQ=Quote-PowerShell $python
-$backendCommand="Set-Location -LiteralPath $backendQ; Write-Host 'MARS Promo ROI API: http://127.0.0.1:$BackendPort' -ForegroundColor Cyan; Write-Host 'Swagger: http://127.0.0.1:$BackendPort/docs' -ForegroundColor Cyan; & $pythonQ -m uvicorn app.main:app --reload --host 127.0.0.1 --port $BackendPort"
-$frontendCommand="Set-Location -LiteralPath $frontendQ; Write-Host 'MARS Promo ROI frontend: http://127.0.0.1:$FrontendPort' -ForegroundColor Cyan; & npm.cmd run dev -- --host 127.0.0.1 --port $FrontendPort"
+$backendCommand="Set-Location -LiteralPath $backendQ; `$env:CORS_ORIGINS='http://localhost:$FrontendPort,http://127.0.0.1:$FrontendPort'; Write-Host 'MARS Promo ROI API: http://127.0.0.1:$BackendPort' -ForegroundColor Cyan; Write-Host 'Swagger: http://127.0.0.1:$BackendPort/docs' -ForegroundColor Cyan; & $pythonQ -m uvicorn app.main:app --reload --host 127.0.0.1 --port $BackendPort"
+$frontendCommand="Set-Location -LiteralPath $frontendQ; `$env:VITE_API_BASE_URL='http://127.0.0.1:$BackendPort/api'; Write-Host 'MARS Promo ROI frontend: http://127.0.0.1:$FrontendPort' -ForegroundColor Cyan; Write-Host 'Backend API: http://127.0.0.1:$BackendPort/api' -ForegroundColor Cyan; & npm.cmd run dev -- --host 127.0.0.1 --port $FrontendPort --strictPort"
 $backendWindow=Start-ProjectWindow 'MARS Promo ROI Backend' $backendCommand
 Start-Sleep -Milliseconds 900
 try { $frontendWindow=Start-ProjectWindow 'MARS Promo ROI Frontend' $frontendCommand }
@@ -66,9 +74,10 @@ $trackingPath=Join-Path $trackingDirectory 'processes.json'
 $entries=@()
 if(Test-Path $trackingPath){try{$entries=@(Get-Content -Raw $trackingPath | ConvertFrom-Json)}catch{$entries=@()}}
 $entries=@($entries | Where-Object { $_.ProjectRoot -ne $ProjectRoot })
-$entries+=@([pscustomobject]@{ProjectRoot=$ProjectRoot; StartedAt=(Get-Date).ToString('o'); BackendPid=$backendWindow.Id; FrontendPid=$frontendWindow.Id})
+$entries+=@([pscustomobject]@{ProjectRoot=$ProjectRoot; StartedAt=(Get-Date).ToString('o'); BackendPid=$backendWindow.Id; BackendStartedAtTicks=$backendWindow.StartTime.ToUniversalTime().Ticks; FrontendPid=$frontendWindow.Id; FrontendStartedAtTicks=$frontendWindow.StartTime.ToUniversalTime().Ticks})
 $entries | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $trackingPath -Encoding UTF8
 Write-Host "Backend:  http://127.0.0.1:$BackendPort"
 Write-Host "Frontend: http://127.0.0.1:$FrontendPort"
 Write-Host "Swagger:  http://127.0.0.1:$BackendPort/docs"
+Write-Host "Frontend API base URL: http://127.0.0.1:$BackendPort/api"
 Write-Host 'Opened separate PowerShell windows. Use .\scripts\stop.ps1 to stop these project processes.' -ForegroundColor Green

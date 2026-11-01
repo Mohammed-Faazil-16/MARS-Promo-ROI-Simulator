@@ -18,7 +18,7 @@ FastAPI backend for the existing React/Vite simulator. It defaults to persistent
 From the backend directory in PowerShell:
 
 ```powershell
-py -3.11 -m venv .venv
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 pip install -r requirements.txt
@@ -26,7 +26,7 @@ Copy-Item .env.example .env
 uvicorn app.main:app --reload
 ```
 
-If Python 3.11 is not installed, use your installed compatible Python with `python -m venv .venv`.
+Python 3.11 through 3.14 are supported, including Python 3.14.6. The root `setup.ps1` selects the newest compatible installed interpreter and uses it to create `backend/.venv`. For manual setup, run `python -m venv .venv` from `backend/` using the intended interpreter (for example, `py -3.14 -m venv .venv` when the Python launcher is available). If an existing virtual environment was created with a different Python version or base interpreter, setup preserves it as a timestamped backup before creating the matching environment.
 
 - API base: `http://127.0.0.1:8000/api`
 - Swagger UI: `http://127.0.0.1:8000/docs`

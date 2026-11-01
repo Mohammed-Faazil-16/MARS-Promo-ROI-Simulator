@@ -6,10 +6,18 @@ try{$entries=@(Get-Content -Raw $trackingPath | ConvertFrom-Json)}catch{Write-Wa
 $match=@($entries | Where-Object {$_.ProjectRoot -eq $ProjectRoot})
 if(-not $match.Count){Write-Host 'No tracked processes for this extracted project. Close its backend and frontend terminal windows if they are open.'; exit 0}
 foreach($entry in $match){
-    foreach($pidValue in @($entry.BackendPid,$entry.FrontendPid)){
-        if($pidValue){
-            $proc=Get-Process -Id ([int]$pidValue) -ErrorAction SilentlyContinue
-            if($proc){Write-Host "Stopping tracked project window and its child processes (PID $pidValue)..."; & taskkill.exe /PID ([int]$pidValue) /T /F 2>$null | Out-Null}
+    foreach($tracked in @(
+        [pscustomobject]@{Pid=$entry.BackendPid; StartedAtTicks=$entry.BackendStartedAtTicks},
+        [pscustomobject]@{Pid=$entry.FrontendPid; StartedAtTicks=$entry.FrontendStartedAtTicks}
+    )){
+        if($tracked.Pid -and $tracked.StartedAtTicks){
+            $proc=Get-Process -Id ([int]$tracked.Pid) -ErrorAction SilentlyContinue
+            $expectedStart=0L
+            $isTracked=$false
+            if($proc -and $proc.ProcessName -in @('pwsh','powershell') -and [long]::TryParse([string]$tracked.StartedAtTicks,[ref]$expectedStart)){
+                try { $isTracked=($proc.StartTime.ToUniversalTime().Ticks -eq $expectedStart) } catch { $isTracked=$false }
+            }
+            if($isTracked){Write-Host "Stopping tracked project window and its child processes (PID $($tracked.Pid))..."; & taskkill.exe /PID ([int]$tracked.Pid) /T /F 2>$null | Out-Null}
         }
     }
 }

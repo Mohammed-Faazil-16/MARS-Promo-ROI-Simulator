@@ -2,18 +2,16 @@ param([switch]$SkipInstallers)
 $ErrorActionPreference='Stop'
 $ProjectRoot=Split-Path -Parent $PSScriptRoot
 $Backend=Join-Path $ProjectRoot 'backend'; $Frontend=Join-Path $ProjectRoot 'promo-roi-frontend'
+. (Join-Path $PSScriptRoot 'python-discovery.ps1')
 function Refresh-Path {
     $machine=[Environment]::GetEnvironmentVariable('Path','Machine'); $user=[Environment]::GetEnvironmentVariable('Path','User')
     $env:Path=(@($machine,$user,$env:Path) -join ';')
 }
-function Find-Python {
-    $py=Get-Command py -ErrorAction SilentlyContinue
-    if($py){ $out=& $py.Source -3.12 -c "import sys; print(sys.executable)" 2>$null; if($LASTEXITCODE -eq 0){ return $out.Trim() } }
-    $cmd=Get-Command python -ErrorAction SilentlyContinue
-    if($cmd){ $out=& $cmd.Source -c "import sys; print(sys.executable); assert (3,11) <= sys.version_info[:2] < (3,14)" 2>$null; if($LASTEXITCODE -eq 0){ return ($out -split "`n")[0].Trim() } }
-    return $null
+function Check-Python($Exe) {
+    if(-not $Exe -or -not (Test-Path -LiteralPath $Exe -PathType Leaf)){return $false}
+    try { & $Exe -c "import sys; assert (3,11) <= sys.version_info[:2] < (3,15)" 2>$null; return ($LASTEXITCODE -eq 0) }
+    catch { return $false }
 }
-function Check-Python($Exe) { if(-not $Exe){return $false}; & $Exe -c "import sys; assert (3,11) <= sys.version_info[:2] < (3,14)" 2>$null; return ($LASTEXITCODE -eq 0) }
 function Check-Node {
     $node=Get-Command node -ErrorAction SilentlyContinue; $npm=Get-Command npm -ErrorAction SilentlyContinue
     if(-not $node -or -not $npm){return $false}
@@ -30,11 +28,13 @@ function Install-WithWinget($Id) {
     return $true
 }
 Write-Host 'Checking portable project prerequisites...'
-$python=Find-Python
+$selectedPython=Get-CompatiblePython
+$python=if($selectedPython){$selectedPython.Path}else{$null}
 if(-not (Check-Python $python)) {
-    if($SkipInstallers){throw 'Compatible Python 3.11–3.13 is required. Install from https://www.python.org/downloads/windows/ and rerun setup.'}
-    if(-not (Install-WithWinget 'Python.Python.3.12')){ throw 'Python 3.11–3.13 is missing and winget is unavailable. Download the official Windows installer from https://www.python.org/downloads/windows/, enable the Python launcher or Add to PATH, then rerun .\setup.ps1.' }
-    $python=Find-Python
+    if($SkipInstallers){throw 'Compatible Python 3.11–3.14 is required. Install from https://www.python.org/downloads/windows/ and rerun setup.'}
+    if(-not (Install-WithWinget 'Python.Python.3.14')){ throw 'Python 3.11–3.14 is missing and winget is unavailable. Download the official Windows installer from https://www.python.org/downloads/windows/, enable the Python launcher or Add to PATH, then rerun .\setup.ps1.' }
+    $selectedPython=Get-CompatiblePython
+    $python=if($selectedPython){$selectedPython.Path}else{$null}
     if(-not (Check-Python $python)){throw 'Python installation was not detected after installer completion. Close and reopen PowerShell, then run .\setup.ps1 again.'}
 }
 Write-Host "Using Python: $python"
@@ -47,10 +47,30 @@ $nodeVersion=((& (Get-Command node).Source --version) -replace '^v','').Trim()
 if(([version]$nodeVersion).Major -eq 22 -and [version]$nodeVersion -lt [version]'22.13'){
     Write-Warning 'Vite supports this Node version, but the locked ESLint packages declare Node 22.13+; dependency installation/build are supported, while lint may report an engine warning.'
 }
-$venvPython=Join-Path $Backend '.venv\Scripts\python.exe'
-if(-not (Test-Path $venvPython)) { Write-Host 'Creating backend virtual environment...'; & $python -m venv (Join-Path $Backend '.venv'); if($LASTEXITCODE -ne 0){throw 'Failed to create backend/.venv.'} }
-& $venvPython -c "import sys; assert (3,11) <= sys.version_info[:2] < (3,14)"
-if($LASTEXITCODE -ne 0){throw 'Existing backend/.venv uses an incompatible Python version. Remove backend/.venv and rerun setup.'}
+$venvPath=Join-Path $Backend '.venv'; $venvPython=Join-Path $venvPath 'Scripts\python.exe'
+$selectedPythonVersion="$($selectedPython.Version.Major).$($selectedPython.Version.Minor)"
+$recreateVenv=$false
+if(Test-Path $venvPython) {
+    $existingVenvVersion=(& $venvPython -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>$null).Trim()
+    $recreateVenv=($LASTEXITCODE -ne 0 -or $existingVenvVersion -ne $selectedPythonVersion)
+    if(-not $recreateVenv) {
+        $existingVenvBase=(& $venvPython -c "import sys; print(getattr(sys, '_base_executable', sys.executable))" 2>$null).Trim()
+        $recreateVenv=($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $existingVenvBase -PathType Leaf))
+        if(-not $recreateVenv) {
+            $selectedPythonPath=(Resolve-Path -LiteralPath $python).Path
+            $existingVenvBasePath=(Resolve-Path -LiteralPath $existingVenvBase).Path
+            $recreateVenv=-not [string]::Equals($selectedPythonPath,$existingVenvBasePath,[StringComparison]::OrdinalIgnoreCase)
+        }
+    }
+}
+if($recreateVenv) {
+    $backupPath="$venvPath-backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+    Write-Warning "Existing virtual environment does not match selected Python. Preserving it at $backupPath."
+    Move-Item -LiteralPath $venvPath -Destination $backupPath
+}
+if(-not (Test-Path $venvPython)) { Write-Host 'Creating backend virtual environment...'; & $python -m venv $venvPath; if($LASTEXITCODE -ne 0){throw 'Failed to create backend/.venv.'} }
+& $venvPython -c "import sys; assert (3,11) <= sys.version_info[:2] < (3,15)"
+if($LASTEXITCODE -ne 0){throw 'backend/.venv must use Python 3.11–3.14; rerun setup after checking the selected interpreter.'}
 Write-Host 'Installing backend requirements into backend/.venv...'
 & $venvPython -m pip install -r (Join-Path $Backend 'requirements.txt')
 if($LASTEXITCODE -ne 0){throw 'Backend dependency installation failed. Check network access and backend/requirements.txt.'}
